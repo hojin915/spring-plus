@@ -68,6 +68,7 @@ class TodoControllerTest {
                 .thenThrow(new InvalidRequestException("Todo not found"));
 
         // then
+        // 비교기준: 기존 성공했을 때 -> 수정 예외 발생했을 때
         mockMvc.perform(get("/todos/{todoId}", todoId))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(HttpStatus.BAD_REQUEST.name()))
