@@ -1,5 +1,6 @@
 package org.example.expert.domain.todo.service;
 
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.example.expert.client.WeatherClient;
 import org.example.expert.domain.common.dto.AuthUser;
@@ -7,12 +8,13 @@ import org.example.expert.domain.common.exception.InvalidRequestException;
 import org.example.expert.domain.todo.dto.request.TodoSaveRequest;
 import org.example.expert.domain.todo.dto.response.TodoResponse;
 import org.example.expert.domain.todo.dto.response.TodoSaveResponse;
+import org.example.expert.domain.todo.entity.QTodo;
 import org.example.expert.domain.todo.entity.Todo;
 import org.example.expert.domain.todo.repository.TodoRepository;
 import org.example.expert.domain.user.dto.response.UserResponse;
+import org.example.expert.domain.user.entity.QUser;
 import org.example.expert.domain.user.entity.User;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,8 @@ public class TodoService {
 
     private final TodoRepository todoRepository;
     private final WeatherClient weatherClient;
+
+    private final JPAQueryFactory jpaQueryFactory;
 
     public TodoSaveResponse saveTodo(AuthUser authUser, TodoSaveRequest todoSaveRequest) {
         User user = User.fromAuthUser(authUser);
@@ -84,19 +88,31 @@ public class TodoService {
     }
 
     public TodoResponse getTodo(long todoId) {
-        Todo todo = todoRepository.findByIdWithUser(todoId)
-                .orElseThrow(() -> new InvalidRequestException("Todo not found"));
+        QTodo todo = QTodo.todo;
+        QUser user = QUser.user;
 
-        User user = todo.getUser();
+        // QTodo -> Todo 로 쿼리 결과 받기
+         Todo resultTodo = jpaQueryFactory
+                .selectFrom(todo)
+                .join(todo.user, user).fetchJoin()
+                .where(todo.id.eq(todoId))
+                .fetchOne();
+
+         // 예외처리
+        if(resultTodo == null) {
+            throw new InvalidRequestException("Todo not found");
+        }
+
+        User resultUser = resultTodo.getUser();
 
         return new TodoResponse(
-                todo.getId(),
-                todo.getTitle(),
-                todo.getContents(),
-                todo.getWeather(),
-                new UserResponse(user.getId(), user.getEmail()),
-                todo.getCreatedAt(),
-                todo.getModifiedAt()
+                resultTodo.getId(),
+                resultTodo.getTitle(),
+                resultTodo.getContents(),
+                resultTodo.getWeather(),
+                new UserResponse(resultUser.getId(), resultUser.getEmail()),
+                resultTodo.getCreatedAt(),
+                resultTodo.getModifiedAt()
         );
     }
 }

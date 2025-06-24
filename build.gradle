@@ -60,6 +60,10 @@ dependencies {
     kapt "jakarta.persistence:jakarta.persistence-api"
 }
 
+kapt {
+    keepJavacAnnotationProcessors = true
+}
+
 tasks.named('test') {
     useJUnitPlatform()
 }
@@ -69,8 +73,4 @@ allOpen {
     annotation("jakarta.persistence.Entity")
     annotation("jakarta.persistence.Embeddable")
     annotation("jakarta.persistence.MappedSuperclass")
-}
-
-kapt {
-    keepJavacAnnotationProcessors = true
 }
