@@ -12,10 +12,13 @@ import org.example.expert.domain.todo.repository.TodoRepository;
 import org.example.expert.domain.user.dto.response.UserResponse;
 import org.example.expert.domain.user.entity.User;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -47,10 +50,27 @@ public class TodoService {
         );
     }
 
-    public Page<TodoResponse> getTodos(int page, int size) {
+    public Page<TodoResponse> getTodos(int page, int size, String weather, LocalDateTime start, LocalDateTime end) {
         Pageable pageable = PageRequest.of(page - 1, size);
 
-        Page<Todo> todos = todoRepository.findAllByOrderByModifiedAtDesc(pageable);
+        // start, end 없을 경우 임의 값 지정
+        // 시작일은 현재시간 기준 하루 전
+        if(start == null){
+            start = LocalDateTime.now().minusDays(1);
+        }
+        // 종료일은 현재시간
+        if(end == null){
+            end = LocalDateTime.now();
+        }
+
+        // 날씨 Param 이 없으면 기존 쿼리에 수정일 범위만 적용
+        // 날씨 Param 있으면 필터링 적용된 쿼리 사용
+        Page<Todo> todos;
+        if(weather == null){
+            todos = todoRepository.findAllByModifiedAtBetween(pageable, start, end);
+        } else{
+            todos = todoRepository.findAllByWeatherAndModifiedAtBetween(pageable, weather, start, end);
+        }
 
         return todos.map(todo -> new TodoResponse(
                 todo.getId(),
