@@ -1,13 +1,13 @@
 package org.example.expert.domain.user.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.example.expert.domain.common.annotation.Auth;
-import org.example.expert.domain.common.dto.AuthUser;
+import org.example.expert.domain.common.dto.CustomUser;
 import org.example.expert.domain.user.dto.request.UserChangePasswordRequest;
 import org.example.expert.domain.user.dto.response.UserProfileResponse;
 import org.example.expert.domain.user.dto.response.UserResponse;
 import org.example.expert.domain.user.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -22,19 +22,19 @@ public class UserController {
     }
 
     @PutMapping("/users")
-    public void changePassword(@Auth AuthUser authUser, @RequestBody UserChangePasswordRequest userChangePasswordRequest) {
-        userService.changePassword(authUser.getId(), userChangePasswordRequest);
+    public void changePassword(@AuthenticationPrincipal CustomUser user, @RequestBody UserChangePasswordRequest userChangePasswordRequest) {
+        userService.changePassword(user.getId(), userChangePasswordRequest);
     }
 
     // 토큰 nickname 삽입 확인용 프로필 조회
     @GetMapping("/users/me")
-    public ResponseEntity<UserProfileResponse> getProfile(@Auth AuthUser authUser) {
+    public ResponseEntity<UserProfileResponse> getProfile(@AuthenticationPrincipal CustomUser user) {
         return ResponseEntity.ok(
                 new UserProfileResponse(
-                        authUser.getId(),
-                        authUser.getNickname(),
-                        authUser.getEmail(),
-                        authUser.getUserRole()
+                        user.getId(),
+                        user.getNickname(),
+                        user.getEmail(),
+                        user.getUserRole()
                 )
         );
     }

@@ -6,7 +6,7 @@ import org.example.expert.domain.comment.dto.response.CommentResponse;
 import org.example.expert.domain.comment.dto.response.CommentSaveResponse;
 import org.example.expert.domain.comment.entity.Comment;
 import org.example.expert.domain.comment.repository.CommentRepository;
-import org.example.expert.domain.common.dto.AuthUser;
+import org.example.expert.domain.common.dto.CustomUser;
 import org.example.expert.domain.common.exception.InvalidRequestException;
 import org.example.expert.domain.todo.entity.Todo;
 import org.example.expert.domain.todo.repository.TodoRepository;
@@ -27,8 +27,8 @@ public class CommentService {
     private final CommentRepository commentRepository;
 
     @Transactional
-    public CommentSaveResponse saveComment(AuthUser authUser, long todoId, CommentSaveRequest commentSaveRequest) {
-        User user = User.fromAuthUser(authUser);
+    public CommentSaveResponse saveComment(CustomUser customUser, long todoId, CommentSaveRequest commentSaveRequest) {
+        User user = User.fromCustomUser(customUser);
         Todo todo = todoRepository.findById(todoId).orElseThrow(() ->
                 new InvalidRequestException("Todo not found"));
 
