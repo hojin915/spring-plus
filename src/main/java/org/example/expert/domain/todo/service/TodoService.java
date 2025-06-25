@@ -1,13 +1,17 @@
 package org.example.expert.domain.todo.service;
 
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.example.expert.client.WeatherClient;
+import org.example.expert.domain.comment.entity.QComment;
 import org.example.expert.domain.common.dto.CustomUser;
 import org.example.expert.domain.common.exception.InvalidRequestException;
+import org.example.expert.domain.manager.entity.QManager;
 import org.example.expert.domain.todo.dto.request.TodoSaveRequest;
 import org.example.expert.domain.todo.dto.response.TodoResponse;
 import org.example.expert.domain.todo.dto.response.TodoSaveResponse;
+import org.example.expert.domain.todo.dto.response.TodoSearchResponse;
 import org.example.expert.domain.todo.entity.QTodo;
 import org.example.expert.domain.todo.entity.Todo;
 import org.example.expert.domain.todo.repository.TodoRepository;
@@ -15,12 +19,17 @@ import org.example.expert.domain.user.dto.response.UserResponse;
 import org.example.expert.domain.user.entity.QUser;
 import org.example.expert.domain.user.entity.User;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -58,13 +67,11 @@ public class TodoService {
         Pageable pageable = PageRequest.of(page - 1, size);
 
         // start, end 없을 경우 임의 값 지정
-        // 시작일은 현재시간 기준 하루 전
         if(start == null){
-            start = LocalDateTime.now().minusDays(1);
+            start = LocalDateTime.MIN;
         }
-        // 종료일은 현재시간
         if(end == null){
-            end = LocalDateTime.now();
+            end = LocalDateTime.MAX;
         }
 
         // 날씨 Param 이 없으면 기존 쿼리에 수정일 범위만 적용
@@ -114,5 +121,95 @@ public class TodoService {
                 resultTodo.getCreatedAt(),
                 resultTodo.getModifiedAt()
         );
+    }
+
+    public Page<TodoSearchResponse> searchTodo(int page, int size, String searchTitle, String searchManager, LocalDateTime start, LocalDateTime end) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+
+        QTodo todo = QTodo.todo;
+        QManager manager = QManager.manager;
+        QComment comment = QComment.comment;
+
+        // start, end 없을 경우 임의 값 지정
+        if(start == null){
+            start = LocalDateTime.MIN;
+        }
+        if(end == null){
+            end = LocalDateTime.MAX;
+        }
+
+        // BooleanBuilder 로 WHERE 조건 설정
+        BooleanBuilder builder  = new BooleanBuilder();
+
+        builder.and(todo.createdAt.between(start, end));
+
+        if(searchTitle != null && !searchTitle.isBlank()){
+            builder.and(todo.title.containsIgnoreCase(searchTitle));
+        }
+
+        if(searchManager != null && !searchManager.isBlank()){
+            builder.and(todo.managers.any().user.nickname.containsIgnoreCase(searchManager));
+        }
+
+        // 조건에 맞는 Todos
+        List<Todo> todos = jpaQueryFactory
+                .select(todo)
+                .from(todo)
+                .where(builder)
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        // Page 전환용 전체 개수
+        Long total = Optional.ofNullable(
+                jpaQueryFactory
+                    .select(todo.count())
+                    .from(todo)
+                    .where(builder)
+                    .fetchOne()
+        ).orElse(0L);
+
+        // Todos Id 추출
+        List<Long> todoIds = todos.stream()
+                .map(Todo::getId)
+                .toList();
+
+        // todoIds 기준 manager 수 카운트 및 매핑
+        Map<Long, Long> managerCountMap = jpaQueryFactory
+                .select(manager.todo.id, manager.count())
+                .from(manager)
+                .where(manager.todo.id.in(todoIds))
+                .groupBy(manager.todo.id)
+                .fetch()
+                .stream()
+                .collect(Collectors.toMap(
+                        tuple -> tuple.get(0, Long.class),
+                        tuple -> Optional.ofNullable(tuple.get(1, Long.class)).orElse(0L)
+                ));
+
+        // todoIds 기준 comment 수 카운트 및 매핑
+        Map<Long, Long> commentCountMap = jpaQueryFactory
+                .select(comment.todo.id, comment.count())
+                .from(comment)
+                .where(comment.todo.id.in(todoIds))
+                .groupBy(comment.todo.id)
+                .fetch()
+                .stream()
+                .collect(Collectors.toMap(
+                        tuple -> tuple.get(0, Long.class),
+                        tuple -> Optional.ofNullable(tuple.get(1, Long.class)).orElse(0L)
+                ));
+
+        // title, managerCount, commentCount -> ResponseDto 매핑
+        List<TodoSearchResponse> responseList = todos.stream()
+                .map(t -> new TodoSearchResponse(
+                            t.getTitle(),
+                            managerCountMap.getOrDefault(t.getId(), 0L).intValue(),
+                            commentCountMap.getOrDefault(t.getId(), 0L).intValue()
+                ))
+                .toList();
+
+        // 페이징 해서 리턴
+        return new PageImpl<>(responseList, pageable, total);
     }
 }
