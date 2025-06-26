@@ -68,10 +68,10 @@ public class TodoService {
 
         // start, end 없을 경우 임의 값 지정
         if(start == null){
-            start = LocalDateTime.MIN;
+            start = LocalDateTime.of(2000, 1, 1, 0, 0);
         }
         if(end == null){
-            end = LocalDateTime.MAX;
+            end = LocalDateTime.of(2030, 1, 1, 0, 0);
         }
 
         // 날씨 Param 이 없으면 기존 쿼리에 수정일 범위만 적용
@@ -123,6 +123,7 @@ public class TodoService {
         );
     }
 
+    // 리팩터링 필요
     public Page<TodoSearchResponse> searchTodo(int page, int size, String searchTitle, String searchManager, LocalDateTime start, LocalDateTime end) {
         Pageable pageable = PageRequest.of(page - 1, size);
 
@@ -156,6 +157,7 @@ public class TodoService {
                 .select(todo)
                 .from(todo)
                 .where(builder)
+                .orderBy(todo.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
