@@ -64,12 +64,12 @@ public class UserService {
         // S3 업로드
         String publicUrl = s3Uploader.upload(image, dirName, user.getId());
 
-        // DB 에 key 형태로 저장한다
+        // DB 에 key + 확장자 형태로 저장한다
         userRepository.updateImage(user.getId(), key);
 
         String url = s3Uploader.generatePresignedUrl(key);
 
-        return new UserImageResponseDto(url);
+        return new UserImageResponseDto(key, url);
     }
 
     public UserImageResponseDto getImage(CustomUser customUser) {
@@ -79,11 +79,11 @@ public class UserService {
         String key = user.getImageUrlKey();
         String url;
         if(key == null) {
-            url = s3Uploader.generatePresignedUrl("default");
+            url = s3Uploader.generatePresignedUrl("profile-images/default.webp");
         } else {
             url = s3Uploader.generatePresignedUrl(user.getImageUrlKey());
         }
 
-        return new UserImageResponseDto(url);
+        return new UserImageResponseDto(key, url);
     }
 }

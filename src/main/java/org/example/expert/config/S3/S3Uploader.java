@@ -57,14 +57,14 @@ public class S3Uploader {
 
     // 파일 확장자 리턴
     private String getFileExtension(String fileName) {
-        if(fileName == null || fileName.contains(".")){
+        if(fileName == null || !fileName.contains(".")){
             return "";
         }
         return fileName.substring(fileName.lastIndexOf("."));
     }
 
     private String getFileUrl(String fileName) {
-        return "https://" + bucketName + ".s3.amazonaws.com/" + fileName;
+        return bucketName + ".s3.amazonaws.com/" + fileName;
     }
 
     // 읽기 가능한 PresignedUrl 생성
