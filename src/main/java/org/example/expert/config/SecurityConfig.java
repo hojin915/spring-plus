@@ -1,6 +1,7 @@
 package org.example.expert.config;
 
 import lombok.RequiredArgsConstructor;
+import org.example.expert.config.filter.JwtFilter;
 import org.example.expert.domain.common.exception.CustomAccessDeniedHandler;
 import org.example.expert.domain.common.exception.CustomAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
@@ -35,7 +36,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(
                         auth -> auth
-                                .requestMatchers("/auth/**").permitAll()
+                                .requestMatchers("/auth/**", "/health", "/actuator/health").permitAll()
                                 .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)

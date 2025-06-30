@@ -1,6 +1,7 @@
-package org.example.expert.config;
+package org.example.expert.config.filter;
 
 import lombok.RequiredArgsConstructor;
+import org.example.expert.config.JwtUtil;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

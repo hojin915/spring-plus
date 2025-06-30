@@ -3,6 +3,7 @@ package org.example.expert.domain.user.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.example.expert.domain.common.dto.AuthUser;
 import org.example.expert.domain.common.dto.CustomUser;
 import org.example.expert.domain.common.entity.Timestamped;
@@ -22,6 +23,9 @@ public class User extends Timestamped {
     private String password;
     @Enumerated(EnumType.STRING)
     private UserRole userRole;
+
+    @Setter
+    private String imageUrlKey = null;
 
     public User(String email, String nickname, String password, UserRole userRole) {
         this.email = email;

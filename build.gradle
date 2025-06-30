@@ -61,6 +61,13 @@ dependencies {
 
     // SpringSecurity
     implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // Health Check
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // AWS S3
+    implementation platform("software.amazon.awssdk:bom:2.25.10")
+    implementation 'software.amazon.awssdk:s3'
 }
 
 kapt {

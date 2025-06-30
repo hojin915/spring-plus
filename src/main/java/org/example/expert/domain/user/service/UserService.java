@@ -2,21 +2,26 @@ package org.example.expert.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.expert.config.PasswordEncoder;
+import org.example.expert.config.S3.S3Uploader;
+import org.example.expert.domain.common.dto.CustomUser;
 import org.example.expert.domain.common.exception.InvalidRequestException;
 import org.example.expert.domain.user.dto.request.UserChangePasswordRequest;
+import org.example.expert.domain.user.dto.response.UserImageResponseDto;
 import org.example.expert.domain.user.dto.response.UserResponse;
 import org.example.expert.domain.user.entity.User;
 import org.example.expert.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final S3Uploader s3Uploader;
 
     public UserResponse getUser(long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new InvalidRequestException("User not found"));
@@ -47,5 +52,38 @@ public class UserService {
                 !userChangePasswordRequest.getNewPassword().matches(".*[A-Z].*")) {
             throw new InvalidRequestException("새 비밀번호는 8자 이상이어야 하고, 숫자와 대문자를 포함해야 합니다.");
         }
+    }
+
+    public UserImageResponseDto uploadImage(CustomUser customUser, MultipartFile image) {
+        User user = User.fromCustomUser(customUser);
+        String dirName = "profile-images";
+
+        // PresignedUrl 리턴하기 위한 key
+        String key = s3Uploader.getS3Key(dirName, user.getId(), image);
+
+        // S3 업로드
+        String publicUrl = s3Uploader.upload(image, dirName, user.getId());
+
+        // DB 에 key 형태로 저장한다
+        userRepository.updateImage(user.getId(), key);
+
+        String url = s3Uploader.generatePresignedUrl(key);
+
+        return new UserImageResponseDto(url);
+    }
+
+    public UserImageResponseDto getImage(CustomUser customUser) {
+        User user = userRepository.findById(customUser.getId()).
+                orElseThrow(() -> new InvalidRequestException("User not found"));
+
+        String key = user.getImageUrlKey();
+        String url;
+        if(key == null) {
+            url = s3Uploader.generatePresignedUrl("default");
+        } else {
+            url = s3Uploader.generatePresignedUrl(user.getImageUrlKey());
+        }
+
+        return new UserImageResponseDto(url);
     }
 }
