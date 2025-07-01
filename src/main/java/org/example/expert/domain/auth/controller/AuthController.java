@@ -26,4 +26,11 @@ public class AuthController {
     public SigninResponse signin(@Valid @RequestBody SigninRequest signinRequest) {
         return authService.signin(signinRequest);
     }
+
+    // DB에 유저 세팅
+    // 인증 필요 없기 때문에 여기에 추가함
+    @PostMapping("/auth/setuser")
+    public Integer setUser() {
+        return authService.setUser();
+    }
 }

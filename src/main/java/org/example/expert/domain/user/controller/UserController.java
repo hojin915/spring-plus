@@ -1,17 +1,22 @@
 package org.example.expert.domain.user.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.example.expert.config.S3.S3Uploader;
 import org.example.expert.domain.common.dto.CustomUser;
 import org.example.expert.domain.user.dto.request.UserChangePasswordRequest;
-import org.example.expert.domain.user.dto.response.UserImageResponseDto;
+import org.example.expert.domain.user.dto.response.UserImageResponse;
 import org.example.expert.domain.user.dto.response.UserProfileResponse;
 import org.example.expert.domain.user.dto.response.UserResponse;
+import org.example.expert.domain.user.dto.response.UserSearchResponse;
 import org.example.expert.domain.user.service.UserService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Slice;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 @RestController
 @RequiredArgsConstructor
@@ -43,7 +48,7 @@ public class UserController {
     }
 
     @PostMapping("/users/image")
-    public ResponseEntity<UserImageResponseDto> uploadImage(
+    public ResponseEntity<UserImageResponse> uploadImage(
             @AuthenticationPrincipal CustomUser user,
             @RequestParam(value = "image") MultipartFile image
     ){
@@ -51,9 +56,26 @@ public class UserController {
     }
 
     @GetMapping("/users/image")
-    public ResponseEntity<UserImageResponseDto> getImage(
+    public ResponseEntity<UserImageResponse> getImage(
             @AuthenticationPrincipal CustomUser user
     ){
       return ResponseEntity.ok(userService.getImage(user));
+    }
+
+    @GetMapping("/users/search")
+    public ResponseEntity<Page<UserSearchResponse>> searchUser(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam String nickname
+    ){
+        LocalDateTime start = LocalDateTime.now();
+
+        Page<UserSearchResponse> responsePage = userService.searchUser(page, size, nickname);
+
+        LocalDateTime end = LocalDateTime.now();
+        Duration duration = Duration.between(start, end);
+        System.out.println(duration.toMillis());
+
+        return ResponseEntity.ok(responsePage);
     }
 }

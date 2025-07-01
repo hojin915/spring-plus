@@ -6,13 +6,22 @@ import org.example.expert.config.S3.S3Uploader;
 import org.example.expert.domain.common.dto.CustomUser;
 import org.example.expert.domain.common.exception.InvalidRequestException;
 import org.example.expert.domain.user.dto.request.UserChangePasswordRequest;
-import org.example.expert.domain.user.dto.response.UserImageResponseDto;
+import org.example.expert.domain.user.dto.response.UserImageResponse;
 import org.example.expert.domain.user.dto.response.UserResponse;
+import org.example.expert.domain.user.dto.response.UserSearchResponse;
 import org.example.expert.domain.user.entity.User;
 import org.example.expert.domain.user.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -54,7 +63,7 @@ public class UserService {
         }
     }
 
-    public UserImageResponseDto uploadImage(CustomUser customUser, MultipartFile image) {
+    public UserImageResponse uploadImage(CustomUser customUser, MultipartFile image) {
         User user = User.fromCustomUser(customUser);
         String dirName = "profile-images";
 
@@ -69,10 +78,10 @@ public class UserService {
 
         String url = s3Uploader.generatePresignedUrl(key);
 
-        return new UserImageResponseDto(key, url);
+        return new UserImageResponse(key, url);
     }
 
-    public UserImageResponseDto getImage(CustomUser customUser) {
+    public UserImageResponse getImage(CustomUser customUser) {
         User user = userRepository.findById(customUser.getId()).
                 orElseThrow(() -> new InvalidRequestException("User not found"));
 
@@ -84,6 +93,12 @@ public class UserService {
             url = s3Uploader.generatePresignedUrl(user.getImageUrlKey());
         }
 
-        return new UserImageResponseDto(key, url);
+        return new UserImageResponse(key, url);
+    }
+
+    public Page<UserSearchResponse> searchUser(int page, int size, String nickname) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+
+        return userRepository.findAllByNickname(nickname, pageable);
     }
 }
