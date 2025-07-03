@@ -41,7 +41,7 @@ class TodoService(
         val savedTodo : Todo = todoRepository.save(newTodo)
 
         return TodoSaveResponse(
-            savedTodo.id,
+            savedTodo.id!!,
             savedTodo.title,
             savedTodo.contents,
             weather,
@@ -70,7 +70,7 @@ class TodoService(
         }
 
         return todos.map{todo -> TodoResponse(
-            todo.id,
+            todo.id!!,
             todo.title,
             todo.contents,
             todo.weather,
@@ -89,7 +89,7 @@ class TodoService(
         val resultUser : User = todo.user
 
         return TodoResponse(
-            todo.id,
+            todo.id!!,
             todo.title,
             todo.contents,
             todo.weather,
