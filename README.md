@@ -34,7 +34,7 @@ Page<User> users = userRepository.findAllByNickname(nickname, pageable);
 Page<User> findAllByNickname(@Param("nickname")String nickname, Pageable pageable);
 ```
 걸린 시간 :  
-766, `658`, `952`, 785, 792, 775, 659, 787, 905, 884 
+766, `658`, `952`, 785, 792, 775, 659, 787, 905, 884  
 Average : 794(milliseconds)
 
 개선(v1) - DTO Projection(Constructor-based)
