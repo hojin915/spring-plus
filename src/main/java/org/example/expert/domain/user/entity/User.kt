@@ -28,6 +28,7 @@ class User(
             return user
         }
 
+        @JvmStatic
         fun fromAuthUser(authUser: AuthUser): User =
             User(id = authUser.id, nickname = authUser.nickname, email = authUser.email, userRole = authUser.userRole)
 
