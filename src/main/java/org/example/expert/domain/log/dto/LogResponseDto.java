@@ -1,6 +1,5 @@
 package org.example.expert.domain.log.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import org.example.expert.domain.log.entity.DomainLog;
 

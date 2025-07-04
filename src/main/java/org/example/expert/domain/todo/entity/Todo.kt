@@ -7,7 +7,8 @@ import org.example.expert.domain.manager.entity.Manager
 import org.example.expert.domain.user.entity.User
 
 @Entity
-data class Todo(
+@Table(name = "todo")
+class Todo(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id : Long? = null,

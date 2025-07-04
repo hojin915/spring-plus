@@ -1,6 +1,5 @@
 package org.example.expert.domain.auth.service;
 
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.example.expert.config.JwtUtil;
 import org.example.expert.config.PasswordEncoder;
@@ -41,7 +40,7 @@ public class AuthService {
 
         UserRole userRole = UserRole.of(signupRequest.getUserRole());
 
-        User newUser = new User(
+        User newUser = User.create(
                 signupRequest.getEmail(),
                 signupRequest.getNickname(),
                 encodedPassword,
@@ -79,7 +78,7 @@ public class AuthService {
             String email = i + "@example.com";
             String nickname = generateNickname();
             String password = passwordEncoder.encode("1234");
-            User user = new User(email, nickname, password, UserRole.USER);
+            User user = User.create(email, nickname, password, UserRole.USER);
             toInsert.add(user);
 
             // batchSize 단위로 DB 에 반영

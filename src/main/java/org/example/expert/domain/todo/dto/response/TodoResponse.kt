@@ -3,7 +3,7 @@ package org.example.expert.domain.todo.dto.response
 import org.example.expert.domain.user.dto.response.UserResponse
 import java.time.LocalDateTime
 
-class TodoResponse(
+data class TodoResponse(
     val id : Long,
     val title : String,
     val contents : String,
